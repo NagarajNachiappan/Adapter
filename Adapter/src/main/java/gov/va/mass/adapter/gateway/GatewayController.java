@@ -17,7 +17,8 @@ import ca.uhn.hl7v2.HapiContext;
 import ca.uhn.hl7v2.DefaultHapiContext;
 import ca.uhn.hl7v2.HL7Exception;
 import ca.uhn.hl7v2.parser.Parser;
-import ca.uhn.hl7v2.parser.PipeParser;
+import ca.uhn.hl7v2.AcknowledgmentCode;
+
 
 
 
@@ -29,13 +30,16 @@ import ca.uhn.hl7v2.parser.PipeParser;
 public class GatewayController {
 
     Message HL7Message;
-    @RequestMapping( method= RequestMethod.POST, produces = "application/hl7-v2+er7")
-    public String method3( @RequestBody String requestBody){
+
+    @RequestMapping(method = RequestMethod.POST, produces = "application/hl7-v2+er7")
+    public String HL7Handler(@RequestBody String requestBody) {
         HapiContext context = new DefaultHapiContext();
         Parser genericParser = context.getGenericParser();
-        Message hapiMessage,ackResponse;
-        try
-        {
+        Message hapiMessage, ackResponse;
+        String ACK;
+        hapiMessage = null;
+        ACK= null;
+        try {
             // The parse method performs the actual parsing
             System.out.println("Happy Message is" + requestBody);
   /*            String msg = "MSH|^~\\&|HIS|RIH|EKG|EKG|199904140038||ADT^A01||P|2.2\r"
@@ -49,23 +53,29 @@ public class GatewayController {
 */
             hapiMessage = genericParser.parse(requestBody);
             ackResponse = hapiMessage.generateACK();
-            String ACK = ackResponse.toString();
+            ACK = ackResponse.toString();
             System.out.println("Happy ACK Response is" + ACK);
             System.out.println("Message Processed");
             System.out.println(" ======================================================");
-            return ACK;
-        }
-        catch (HL7Exception e)
-        {
+        } catch (HL7Exception e) {
             e.printStackTrace();
-            return "Error";
-        }
-        catch (IOException e)
-        {
+            try {
+                ackResponse = hapiMessage.generateACK(AcknowledgmentCode.AE, new HL7Exception("HL7Exception"));
+                ACK = ackResponse.toString();
+            } catch (Exception ioe) {
+                ioe.printStackTrace();
+                return ACK;
+            }
+        } catch (IOException e) {
             e.printStackTrace();
-            return "Error";
+            try {
+                ackResponse = hapiMessage.generateACK(AcknowledgmentCode.AE, new HL7Exception("IOException"));
+                ACK = ackResponse.toString();
+            } catch (Exception ioe) {
+                ioe.printStackTrace();
+                return ACK;
+            }
         }
-
+        return ACK;
     }
-
 }
