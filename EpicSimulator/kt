@@ -1,0 +1,10 @@
+#create key and Pem
+
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout localhost_self-signed.key -out localhost_self-signed.pem
+
+#create p12
+
+openssl pkcs12 -export -in localhost_self-signed.pem -inkey localhost_self-signed.key -name "SelfSignedServer" -out localhost_self-signed.p12
+
+# register certs
+keytool -import -noprompt -trustcacerts -file localhost_self-signed.pem -keystore \jre\
